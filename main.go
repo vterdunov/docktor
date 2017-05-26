@@ -21,7 +21,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println("Listening for Docker events ...")
+	log.Println("Listening for Docker events...")
 
 	defer func() {
 		err = client.RemoveEventListener(events)
@@ -41,4 +41,6 @@ func main() {
 			}
 		}
 	}
+
+	log.Println("Stopping...")
 }
