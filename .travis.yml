@@ -1,0 +1,25 @@
+sudo: required
+
+language: go
+
+services:
+  - docker
+
+env:
+  global:
+    - COMMIT=${TRAVIS_COMMIT::8}
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get -y install docker-engine=17.05.0~ce-0~ubuntu-trusty
+
+script:
+  - docker build -t vterdunov/docktor:${COMMIT} .
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+    docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD";
+    docker tag vterdunov/docktor:${COMMIT} vterdunov/docktor:latest;
+    docker push vterdunov/docktor:${COMMIT};
+    docker push vterdunov/docktor:latest;
+    fi
