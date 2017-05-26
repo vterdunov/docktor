@@ -5,8 +5,8 @@ RUN apk update && \
     apk add --no-cache git build-base
 RUN go get -v github.com/fsouza/go-dockerclient
 COPY main.go /build
-RUN GOOS=linux go build -v -ldflags="-s -w" -o docktor main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -v -ldflags="-s -w" -o docktor main.go
 
-FROM alpine:3.5
+FROM scratch
 CMD ["/docktor"]
 COPY --from=build-stage /build/docktor /docktor
