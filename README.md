@@ -1,6 +1,12 @@
 # Docktor
 
-Listen Docker events and restarting unhealthy containers.
+Restarts unhealthy containers.
+
+## Quck Start
+```
+docker pull vterdunov/docktor
+docker run -d --rm --name=docktor -v /var/run/docker.sock:/var/run/docker.sock:ro vterdunov/docktor
+```
 
 ## Build
 `docker build -t docktor .`
