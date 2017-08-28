@@ -1,12 +1,17 @@
 FROM golang:1.8.3-alpine AS build-stage
 
-WORKDIR /build
-RUN apk update && \
-    apk add --no-cache git build-base
-RUN go get -v github.com/fsouza/go-dockerclient
-COPY main.go /build
-RUN CGO_ENABLED=0 GOOS=linux go build -v -ldflags="-s -w" -o docktor main.go
+ARG WORKDIR=/go/src/github.com/vterdunov/docktor
+
+WORKDIR $WORKDIR
+
+RUN apk add --no-cache git build-base
+RUN go get -v github.com/golang/dep/cmd/dep
+
+COPY . $WORKDIR
+RUN [ -d 'vendor' ] || make dep
+
+RUN make compile
 
 FROM scratch
 CMD ["/docktor"]
-COPY --from=build-stage /build/docktor /docktor
+COPY --from=build-stage /go/src/github.com/vterdunov/docktor/docktor /docktor
