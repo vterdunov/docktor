@@ -19,4 +19,4 @@ start-debug:
 
 compile:
 	rm docktor 2>&1 || true
-	$(GO_VARS) go build $(GO_LDFLAGS) -o $(PROG_NAME)
+	$(GO_VARS) go build $(GO_LDFLAGS) -o $(PROG_NAME) ./cmd/docktor
