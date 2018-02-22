@@ -27,7 +27,3 @@
 [[constraint]]
   name = "github.com/jpillora/backoff"
   branch = "master"
-
-  [[constraint]]
-    name = "github.com/sirupsen/logrus"
-    branch = "master"

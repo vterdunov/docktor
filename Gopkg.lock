@@ -58,7 +58,7 @@
     "pkg/term",
     "pkg/term/windows"
   ]
-  revision = "ee9abc212032353e19e5b0f5e6410ad67a0cc9b1"
+  revision = "8b8a0e2c523eb886094fad7e5342d93407a19c8e"
 
 [[projects]]
   name = "github.com/docker/go-connections"
@@ -76,7 +76,25 @@
   branch = "master"
   name = "github.com/fsouza/go-dockerclient"
   packages = ["."]
-  revision = "ca33ff277b527ce11b793e62f9ba244129b01caf"
+  revision = "c05e555b05316a4521b73b8bed3ced4482bc0ef0"
+
+[[projects]]
+  name = "github.com/go-kit/kit"
+  packages = ["log"]
+  revision = "4dc7be5d2d12881735283bcab7352178e190fc71"
+  version = "v0.6.0"
+
+[[projects]]
+  name = "github.com/go-logfmt/logfmt"
+  packages = ["."]
+  revision = "390ab7935ee28ec6b286364bba9b4dd6410cb3d5"
+  version = "v0.3.0"
+
+[[projects]]
+  name = "github.com/go-stack/stack"
+  packages = ["."]
+  revision = "259ab82a6cad3992b4e21ff5cac294ccb06474bc"
+  version = "v1.7.0"
 
 [[projects]]
   name = "github.com/gogo/protobuf"
@@ -85,10 +103,16 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/jpillora/backoff"
   packages = ["."]
   revision = "8eab2debe79d12b7bd3d10653910df25fa9552ba"
+  version = "1.0.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/kr/logfmt"
+  packages = ["."]
+  revision = "b84e30acd515aadc4b783ad4ff83aff3299bdfe0"
 
 [[projects]]
   name = "github.com/opencontainers/go-digest"
@@ -121,24 +145,21 @@
   version = "v0.8.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
-  revision = "8c0189d9f6bbf301e5d055d34268156b317016af"
+  revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
+  version = "v1.0.4"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "432090b8f568c018896cd8a0fb0345872bbac6ce"
+  revision = "49796115aa4b964c318aad4f3084fdb41e9aa067"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = [
-    "context",
-    "context/ctxhttp"
-  ]
+  packages = ["context"]
   revision = "cbe0f9307d0156177f9dd5dc85da1a31abc5f2fb"
 
 [[projects]]
@@ -148,11 +169,11 @@
     "unix",
     "windows"
   ]
-  revision = "37707fdb30a5b38865cfb95e5aab41707daec7fd"
+  revision = "c1138c84af3a9927aee1a1b8b7ce06c9b7ea52bc"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f969b2b2bbc7870532ce8450056a1ec3bde249f1f9cbf992974babf96824fa7b"
+  inputs-digest = "d4c3da1769f71de99a8d4db8b85d4209ae1b90942e9a570a51ac2b88e01b4b50"
   solver-name = "gps-cdcl"
   solver-version = 1

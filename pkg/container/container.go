@@ -1,33 +1,25 @@
 package container
 
 import (
-	"fmt"
 	"os"
 	"time"
 
 	"github.com/fsouza/go-dockerclient"
+	"github.com/go-kit/kit/log"
 	"github.com/jpillora/backoff"
-	log "github.com/sirupsen/logrus"
+	"github.com/pkg/errors"
 )
 
+// Patient represent an unhealthy container
 type Patient struct {
 	cid     string
 	delay   time.Duration
-	attempt int
 	backoff backoff.Backoff
+	attempt int
 }
 
-func init() {
-	log.SetOutput(os.Stdout)
-	if os.Getenv("DOCKTOR_LOGLEVEL") == "debug" {
-		log.SetLevel(log.DebugLevel)
-	} else {
-		log.SetLevel(log.InfoLevel)
-	}
-	customFormatter := new(log.TextFormatter)
-	customFormatter.TimestampFormat = "2006-01-02 15:04:05"
-	log.SetFormatter(customFormatter)
-	customFormatter.FullTimestamp = true
+func (p *Patient) incAttempt() {
+	p.attempt++
 }
 
 // NewDockerClient creates a new Docker Clinet
@@ -35,61 +27,58 @@ func NewDockerClient() (*docker.Client, error) {
 	if os.Getenv("DOCKER_HOST") == "" {
 		client, err := docker.NewClient("unix:///var/run/docker.sock")
 		if err != nil {
-			return nil, fmt.Errorf("Error while get Docker client: %s", err)
+			return nil, errors.Wrap(err, "Error while get Docker client")
 		}
 		return client, nil
 	}
 
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
-		return nil, fmt.Errorf("Error while get Docker client: %s", err)
+		return nil, errors.Wrap(err, "Error while get Docker client from environment")
 	}
 	return client, nil
 }
 
 // Sorter sends unhealthy Container IDs into channel
-func Sorter(events <-chan *docker.APIEvents, cid chan<- string) {
+func Sorter(events <-chan *docker.APIEvents, unhealthyCIDs chan<- string) {
 	for event := range events {
 		switch event.Status {
 		case "health_status: unhealthy":
-			log.WithFields(log.Fields{
-				"container_id": event.ID,
-			}).Info("Found unhealthy container")
-
-			cid <- event.ID
+			unhealthyCIDs <- event.ID
 		}
 	}
 }
 
 // Scheduler determines restart delay for container
-func Scheduler(in <-chan string, out chan<- Patient, backoffMin, backoffMax time.Duration) {
+func Scheduler(CIDs <-chan string, out chan<- Patient, backoffMin, backoffMax time.Duration, j bool, l log.Logger) {
 	patients := make(map[string]Patient)
 	var p Patient
 
-	for containerID := range in {
+	for cid := range CIDs {
 		// check is it a new container or not
-		if _, ok := patients[containerID]; ok {
-			log.Debugf("I've already seen the container %s\n", containerID)
-			p = patients[containerID]
+		if _, seen := patients[cid]; seen {
+			l.Log("msg", "I've already seen the container", "cid", cid)
+			p = patients[cid]
 			p.delay = p.backoff.Duration()
 		} else {
-			log.Debugf("I've never seen the container before %s\n", containerID)
-			p = Patient{}
-			p.cid = containerID
+			l.Log("msg", "I've never seen the container before", "cid", cid)
 
-			// min =
-			b := newBackoff(backoffMin, backoffMax)
-			p.backoff = *b
-			p.delay = b.Duration()
+			b := newBackoff(backoffMin, backoffMax, j)
+			p = Patient{
+				cid:     cid,
+				backoff: *b,
+				delay:   b.Duration(),
+			}
 		}
-		p.attempt++
-		patients[containerID] = p
-		log.WithFields(log.Fields{
-			"function":     "scheduler",
-			"attempt":      p.attempt,
-			"delay":        p.delay,
-			"container_id": containerID,
-		}).Debug("Patient scheduled")
+
+		p.incAttempt()
+		patients[cid] = p
+		l.Log(
+			"msg", "Patient scheduled",
+			"attempt", p.attempt,
+			"delay", p.delay,
+			"cid", cid,
+		)
 
 		// TODO: Implement delete containers from map
 
@@ -97,62 +86,62 @@ func Scheduler(in <-chan string, out chan<- Patient, backoffMin, backoffMax time
 	}
 }
 
-// Restarter receives a patient and restart them
-func Restarter(in <-chan Patient, client *docker.Client) {
+// Restarter receives a patient, and wait before restart the patient
+func Restarter(in <-chan Patient, client *docker.Client, l log.Logger) {
 	for p := range in {
 		go func(p Patient) {
 			cont, _ := client.InspectContainer(p.cid)
 			if cont.State.Health.Status == "unhealthy" {
-				log.Infof("Sleeping %s before restart", p.delay)
+				l.Log("msg", "Sleeping before restart", "time", p.delay)
 				time.Sleep(p.delay)
 
-				log.WithFields(log.Fields{
-					"function":       "restarter",
-					"attempt":        p.attempt,
-					"delay":          p.delay,
-					"container_id":   p.cid,
-					"container_name": cont.Name,
-				}).Debug("Healing patient")
+				l.Log(
+					"msg", "Healing patient",
+					"function", "restarter",
+					"attempt", p.attempt,
+					"delay", p.delay,
+					"cid", p.cid,
+					"container_name", cont.Name,
+				)
 
 				err := client.RestartContainer(p.cid, 10)
 				if err != nil {
-					log.Errorf("Error restarting container: %s", p.cid)
+					l.Log("err", "Error restarting container", "cid", p.cid)
 				}
 			}
 		}(p)
 	}
 }
 
-// PushAlredUnhealhyToScheduler pushes already running unhealthy containers
-// into scheduler.
-func PushAlredUnhealhyToScheduler(client *docker.Client, cid chan<- string) {
+// PushAlredUnhealhy pushes already running unhealthy containers into unhealthy channel.
+func PushAlredUnhealhy(client *docker.Client, cid chan<- string, l log.Logger) {
 	containers, err := client.ListContainers(docker.ListContainersOptions{})
 	if err != nil {
 		panic(err)
 	}
-	for _, container := range containers {
-		cont, err := client.InspectContainer(container.ID)
+	for _, c := range containers {
+		cont, err := client.InspectContainer(c.ID)
 		if err != nil {
-			log.Warn("Cannot get container")
+			l.Log("err", "Cannot get container")
 		}
 		if cont.State.Health.Status == "unhealthy" {
-			log.Infof("Container %s unhealthy. Healing...", container.ID)
-			err = client.RestartContainer(container.ID, 10)
+			l.Log("msg", "Healing...", "cid", c.ID)
+			err = client.RestartContainer(c.ID, 10)
 			if err != nil {
-				log.Infof("Error restarting container: %s", container.ID)
+				l.Log("err", "Error restarting container", "cid", c.ID)
 			}
-			log.Debugf("Restart container %s. OK", container.ID)
+			l.Log("msg", "Restart container is OK", "cid", c.ID)
 		}
 	}
 }
 
 // newBackoff creates a new backoff instance
-func newBackoff(min, max time.Duration) *backoff.Backoff {
+func newBackoff(min, max time.Duration, j bool) *backoff.Backoff {
 	b := backoff.Backoff{
 		Min:    min,
 		Max:    max,
 		Factor: 2,
-		Jitter: true,
+		Jitter: j,
 	}
 	return &b
 }

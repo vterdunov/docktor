@@ -5,13 +5,13 @@ services:
   docktor:
     build: .
     image: docktor
+    environment:
+      - BACKOFF_JITTER=true
     volumes:
      - '/var/run/docker.sock:/var/run/docker.sock:rw'
 
   unhealthy:
     image: busybox
-    logging:
-      driver: 'none'
     stop_grace_period: 1s
     command: sleep 9999
     healthcheck:
