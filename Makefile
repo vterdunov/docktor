@@ -1,11 +1,17 @@
 PROG_NAME = docktor
+IMAGE_TAG = $(shell git rev-parse --short HEAD)
+TAG := $(IMAGE_TAG)
+REGISTRY_URL = vi-nexus.lab.vi.local
+DEFAULT_GOAL := build
+
 GO_VARS=CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 GO_LDFLAGS=-v -ldflags="-s -w"
 
 start: build run
 
+.PHONY: build
 build:
-	docker build -t $(PROG_NAME) .
+	docker build --tag $(PROG_NAME):$(IMAGE_TAG) --tag $(PROG_NAME):latest ./
 
 run:
 	docker run -it --rm --name=$(PROG_NAME) -e DOCKTOR_LOGLEVEL=debug -v /var/run/docker.sock:/var/run/docker.sock:ro -m 500m --cpus=".5" $(PROG_NAME)
