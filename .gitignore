@@ -1,3 +1,4 @@
 docktor
+!docktor/
 vendor/
-.vscode
+.vscode/
