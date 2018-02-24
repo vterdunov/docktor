@@ -14,7 +14,8 @@ script:
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ]; then
       docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD";
-      docker tag docktor:${COMMIT} ${DOCKER_REG}/docktor:latest;
-      docker push ${DOCKER_REG}/docktor:${COMMIT};
+      docker tag docktor:latest ${DOCKER_REG}/docktor:latest;
+      docker tag docktor:${COMMIT} ${DOCKER_REG}/docktor:${COMMIT};
       docker push ${DOCKER_REG}/docktor:latest;
+      docker push ${DOCKER_REG}/docktor:${COMMIT};
     fi
