@@ -5,8 +5,8 @@ import (
 
 	"github.com/fsouza/go-dockerclient"
 	"github.com/go-kit/kit/log"
-	"github.com/vterdunov/docktor/pkg/config"
-	"github.com/vterdunov/docktor/pkg/container"
+	"github.com/vterdunov/docktor/internal/config"
+	"github.com/vterdunov/docktor/internal/container"
 )
 
 func main() {
