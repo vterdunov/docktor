@@ -15,7 +15,7 @@ Docktor read environment variables
 |----------|--------|-------------|
 | BACKOFF_JITTER | bool | Enable/Disable backoff jitter. Default is: `false` |
 | BACKOFF_MIN_TIME | int | Sets the minimum delay time between restart container. Deafult is: `3`s |
-| BACKOFF_MAX_TIME | int | Sets the maximaum delay tume between restart container. Default is: `30`s |
+| BACKOFF_MAX_TIME | int | Sets the maximum delay tume between restart container. Default is: `30`s |
 | DOCKER_HOST | string | Sets a path to docker daemon socket. Can be a unix ot tcp socket (`tcp://example.com:4243`, `unix:///var/run/docker.sock`).  Default is: `unix:///var/run/docker.sock` |
 
 ## Build
