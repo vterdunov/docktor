@@ -1,0 +1,20 @@
+---
+version: '3'
+
+services:
+  docktor:
+    build: .
+    image: docktor
+    environment:
+      - BACKOFF_JITTER=true
+    volumes:
+     - '/var/run/docker.sock:/var/run/docker.sock:rw'
+
+  unhealthy:
+    image: busybox
+    stop_grace_period: 1s
+    command: sleep 9999
+    healthcheck:
+      test: ["CMD", "exit 1"]
+      interval: 2s
+      timeout: 3s

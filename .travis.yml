@@ -1,24 +1,20 @@
 sudo: required
 
-language: go
-
 services:
   - docker
 
 env:
   global:
     - COMMIT=${TRAVIS_COMMIT::7}
-
-before_install:
-  - curl -fsSL get.docker.com | bash
+    - DOCKER_REG=vterdunov
 
 script:
-  - docker build -t vterdunov/docktor:${COMMIT} .
+  - make build
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ]; then
       docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD";
-      docker tag vterdunov/docktor:${COMMIT} vterdunov/docktor:latest;
-      docker push vterdunov/docktor:${COMMIT};
-      docker push vterdunov/docktor:latest;
+      docker tag docktor:${COMMIT} ${DOCKER_REG}/docktor:latest;
+      docker push ${DOCKER_REG}/docktor:${COMMIT};
+      docker push ${DOCKER_REG}/docktor:latest;
     fi
